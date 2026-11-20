@@ -1,0 +1,2639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script Booth — AI & Rules Screenplay Studio</title>
+<style>
+:root {
+  --desk: #d9dfe6;
+  --panel: #f3f5f8;
+  --card: #ffffff;
+  --ink: #14181f;
+  --muted: #64707d;
+  --accent: #3452e1;
+  --accent-tint: #e9edff;
+  --red: #d92d20;
+  --border: #c9d1db;
+  --paper: #ffffff;
+  --line: #d9ddd8;
+  --ls: 2;
+  --warn: #9a5a00;
+  --speaker: #3452e1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --desk: #0e1217;
+    --panel: #151a21;
+    --card: #1d242d;
+    --ink: #e8ecf1;
+    --muted: #aab4c2;
+    --accent: #8ea2ff;
+    --accent-tint: #202a50;
+    --red: #ff6b5e;
+    --border: #394553;
+    --paper: #ffffff;
+  }
+  .page { color: #14181f; }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--desk);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.panel {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 18px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.panel h1 {
+  margin: 0 0 4px;
+  font-size: 26px;
+  letter-spacing: -0.6px;
+}
+
+.tagline {
+  color: var(--muted);
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 13px;
+  margin: 10px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.card h2 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+details.card {
+  padding: 0;
+  overflow: hidden;
+}
+
+details.card > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 13px;
+  font-weight: 700;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+details.card > summary::-webkit-details-marker { display: none; }
+
+details.card > summary:before {
+  content: '⌄';
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 8px;
+  border-radius: 6px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-weight: bold;
+}
+
+details.card:not([open]) > summary:before { content: '›'; }
+details.card > div { padding: 0 13px 13px; }
+
+.controls {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+button, .button, select, input, textarea {
+  font: inherit;
+}
+
+button, .button {
+  min-height: 38px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 6px 11px;
+  font-weight: 650;
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--card);
+  color: var(--ink);
+  transition: transform 0.12s, border-color 0.12s, background 0.12s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+button:hover, .button:hover {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+button:active, .button:active {
+  transform: translateY(1px);
+}
+
+button:disabled, .button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+}
+
+button.danger {
+  color: var(--red) !important;
+  border-color: color-mix(in srgb, var(--red) 50%, var(--border)) !important;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 8px 0 4px;
+}
+
+input, textarea, select {
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin: 7px 0 0;
+}
+
+.status {
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: var(--accent-tint);
+  color: var(--ink);
+}
+
+.status.error { background: #fee9e7; color: #8c2019; }
+.status.warn { background: #fff3d8; color: var(--warn); }
+
+.next-card {
+  border-left: 5px solid var(--accent) !important;
+}
+
+.next-name {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 3px 0 4px;
+  color: var(--accent);
+}
+
+.next-reason {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.marker-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 7px 0 0;
+}
+
+.live-word-mini {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: var(--accent-tint);
+  border-radius: 8px;
+  font-size: 13px;
+  min-height: 40px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(8px);
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.toolbar .spacer { flex: 1; }
+
+.pages {
+  padding: 28px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  align-items: center;
+}
+
+.page {
+  width: 8.5in;
+  min-height: 11in;
+  background: var(--paper);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  padding: 1in 1in 1in 1.5in;
+  font-family: "Courier Prime", "Courier New", monospace;
+  font-size: 12pt;
+  line-height: var(--ls);
+  position: relative;
+  color: #14181f;
+}
+
+.page-number {
+  position: absolute;
+  right: 1in;
+  top: 0.6in;
+  font-size: 11pt;
+}
+
+.title-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 11in;
+  padding-top: 2.2in;
+}
+
+.title-page input, .title-page textarea {
+  font-family: "Courier Prime", "Courier New", monospace;
+  text-align: center;
+  border: 0;
+  border-bottom: 1px dotted #888;
+  border-radius: 0;
+  background: transparent;
+  font-size: 16pt;
+}
+
+.title-page input {
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.title-page textarea {
+  min-height: 60px;
+  font-size: 11pt;
+}
+
+.title-label {
+  text-align: center;
+  color: #888;
+  font-family: system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin-top: 20px;
+}
+
+.script-line {
+  white-space: pre-wrap;
+  min-height: 1.25em;
+  position: relative;
+  padding: 0 2px;
+  line-height: var(--ls);
+  margin-bottom: calc((2 - var(--ls)) * 0.4em);
+}
+
+.script-line:hover {
+  background: #f4f9f8;
+}
+
+.script-line[contenteditable] {
+  outline: none;
+}
+
+.script-line .line-tools {
+  font-family: system-ui, sans-serif;
+  position: absolute;
+  left: -1.35in;
+  top: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+  width: 1.25in;
+  display: flex;
+  gap: 3px;
+  line-height: 1;
+}
+
+.script-line:hover .line-tools {
+  opacity: 1;
+}
+
+.line-tools select {
+  font-size: 9px;
+  padding: 2px;
+  min-height: 22px;
+  width: 72px;
+}
+
+.line-tools button {
+  min-height: 22px;
+  padding: 2px 4px;
+  font-size: 10px;
+}
+
+.type-scene {
+  font-weight: bold;
+  text-align: left;
+}
+
+.type-transition {
+  text-align: right;
+  font-weight: bold;
+}
+
+.type-action {
+  margin: 0;
+}
+
+.type-character {
+  text-align: left;
+  font-weight: bold;
+  margin-left: 2.2in;
+}
+
+.type-dialogue {
+  width: 3.5in;
+  margin-left: 1in;
+  margin-right: 0;
+}
+
+.type-parenthetical {
+  margin-left: 1.6in;
+  width: 2.2in;
+}
+
+.type-shot {
+  font-weight: bold;
+}
+
+.type-break {
+  border-top: 1px dashed #cc5d58;
+  height: 14px;
+  margin: 10px 0;
+}
+
+.type-break:after {
+  content: 'new page ×';
+  font: 10px system-ui;
+  color: #a43a35;
+}
+
+.ai-tag {
+  font: 9px system-ui;
+  color: #7b8e99;
+  padding-left: 6px;
+  user-select: none;
+}
+
+.speaker-color {
+  border-left: 4px solid var(--speaker, #3452e1);
+  padding-left: 8px;
+}
+
+.unsure {
+  border-left: 4px dashed var(--red);
+  padding-left: 8px;
+}
+
+.empty {
+  color: #84908b;
+  text-align: center;
+  margin-top: 3in;
+  font-family: system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.small-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Feature 2: Dedicated livebox sticky at bottom */
+.livebox {
+  position: sticky;
+  bottom: 12px;
+  margin: 0 auto;
+  width: min(8.5in, calc(100% - 32px));
+  padding: 11px 15px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  color: var(--ink);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 4;
+  min-height: 56px;
+}
+
+/* Dedicated live-recognition view: a second in-app page, still within this one HTML file. */
+.recognition-page {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: auto;
+  padding: clamp(18px, 4vw, 56px);
+  background: var(--desk);
+  color: var(--ink);
+}
+.recognition-page[hidden] { display: none !important; }
+.recognition-wrap { width: min(100%, 1050px); margin: 0 auto; }
+.recognition-header { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+.recognition-header h2 { margin:0; font-size:clamp(27px,4vw,43px); }
+.recognition-header p { margin:5px 0 0; color:var(--muted); }
+.recognition-actions { display:flex; gap:8px; flex-wrap:wrap; margin:20px 0 12px; }
+.recognition-status { border-left:5px solid var(--accent); background:var(--accent-tint); border-radius:10px; padding:12px 14px; font-weight:750; }
+.recognition-words { min-height:55vh; margin-top:14px; padding:clamp(20px,4vw,44px); border:1.5px solid var(--border); border-radius:18px; background:var(--card); box-shadow:0 6px 24px #0002; font-size:clamp(19px,2.8vw,31px); line-height:1.65; white-space:pre-wrap; }
+
+#livePageStatus {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.interim-word {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.pulse {
+  animation: pulse 1s infinite;
+  background: var(--red) !important;
+  border-color: var(--red) !important;
+  color: #fff !important;
+}
+
+@keyframes pulse {
+  50% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--red) 22%, transparent); }
+}
+
+.flash {
+  animation: markerFlash 0.55s ease-out !important;
+}
+
+@keyframes markerFlash {
+  0% { background: #fff09a; transform: scale(1.02); }
+  100% { transform: none; }
+}
+
+.fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  border-radius: 50%;
+  width: 54px;
+  height: 54px;
+  z-index: 6;
+  font-size: 26px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+}
+
+.typing-card {
+  width: min(8.5in, calc(100% - 32px));
+  margin: 10px auto 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.zoom-80 .page {
+  transform: scale(0.8);
+  transform-origin: top center;
+  margin-bottom: -2.1in;
+}
+
+.zoom-110 .page {
+  transform: scale(1.1);
+  transform-origin: top center;
+  margin-bottom: 1.1in;
+}
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .panel { position: relative; height: auto; border-right: 0; }
+  .page {
+    transform: scale(0.72);
+    transform-origin: top center;
+    margin-bottom: -3in;
+  }
+  .pages { padding: 12px 10px 80px; }
+  .fab { bottom: 16px; right: 16px; }
+}
+
+@media print {
+  body { background: white; }
+  .panel, .toolbar, .typing-card, .livebox, .fab, .line-tools, .ai-tag {
+    display: none !important;
+  }
+  .app { display: block; }
+  .pages { padding: 0; display: block; }
+  .page {
+    box-shadow: none;
+    break-after: page;
+    width: 8.5in;
+    min-height: 11in;
+    margin: 0;
+    transform: none !important;
+  }
+  .title-page { display: flex; }
+  .page-number { display: block; }
+  .type-break { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <h1>Script Booth</h1>
+    <p class="tagline">Tell the story. Mark each change of voice.</p>
+
+    <div id="errorBar" class="status error hidden" aria-live="assertive"></div>
+    <div id="aiTop" class="status" aria-live="polite">● Rules engine ready — Gemini AI is available.</div>
+
+    <!-- Next voice prediction card -->
+    <section id="nextVoice" class="card next-card">
+      <h2>Next voice</h2>
+      <div id="nextName" class="next-name">UNKNOWN</div>
+      <div id="nextReason" class="next-reason">Waiting for first key press</div>
+      <button id="signalBtn" class="primary" style="width:100%">↹ Dialogue change</button>
+      <div id="markerCount" class="marker-count" aria-live="polite">No dialogue markers yet</div>
+      <p class="hint">Press any key outside text fields or tap headphone button to switch voice.</p>
+    </section>
+
+    <!-- FEATURE 2 & 3 & 4: Live Narration with Mode Matrix (AI vs Rules) -->
+    <section class="card">
+      <h2>🎙 Narrate live</h2>
+      <div class="small-row" style="margin-bottom:8px">
+        <div>
+          <label for="language">Language</label>
+          <select id="language">
+            <option value="en-US">English — US</option>
+            <option value="en-GB">English — UK</option>
+            <option value="en-IN">English — India</option>
+            <option value="hi-IN">Hindi</option>
+            <option value="ta-IN">Tamil</option>
+            <option value="es-ES">Spanish</option>
+            <option value="fr-FR">French</option>
+          </select>
+        </div>
+        <div>
+          <label for="liveMode">Processing Mode</label>
+          <select id="liveMode">
+            <option value="ai">With AI (Gemini)</option>
+            <option value="rules">Without AI (Rules)</option>
+          </select>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="listenBtn" class="primary">🎙 Start listening</button>
+        <button id="nextBtn">Next voice ⏎</button>
+        <button id="openRecognition">Open live words ↗</button>
+      </div>
+      <div id="liveStatus" class="status">Ready — rules engine on.</div>
+
+      <!-- FEATURE 2: Mini live words box inside panel -->
+      <div class="live-word-mini" aria-live="polite">
+        <div id="miniStatus">○ Not listening</div>
+        <div id="miniWords"><span class="interim-word">Words will appear here.</span></div>
+      </div>
+    </section>
+
+    <!-- Type a turn -->
+    <section class="card">
+      <h2>Type a turn</h2>
+      <textarea id="typedText" placeholder="Alex says that we need to leave now."></textarea>
+      <div class="controls">
+        <button id="addTyped" class="primary">Add to script</button>
+        <button id="voiceCommand">Run command</button>
+      </div>
+      <p class="hint">Enter adds a turn. Shift+Enter creates a new line.</p>
+    </section>
+
+    <!-- FEATURE 1, 3, 5, 6: Record or Upload with Beep Injection and AI / Non-AI modes -->
+    <section class="card">
+      <h2>🎵 Record or upload audio</h2>
+      <div class="controls">
+        <button id="recordBtn">● Record audio</button>
+        <button id="systemRecordBtn">🖥 Record system audio/video</button>
+        <label class="button" for="audioFile">Upload audio/video</label>
+        <input id="audioFile" class="hidden" type="file" accept="audio/*,video/*,.mp3,.wav,.m4a,.aac,.ogg,.flac,.webm,.mp4,.mov">
+      </div>
+      <p id="audioName" class="hint">No audio or video selected.</p>
+      
+      <audio id="audioPlayer" controls hidden style="width:100%;margin:9px 0 6px"></audio>
+      <a id="audioSave" class="button" hidden style="width:100%;margin:4px 0 8px;text-align:center" download="script-booth-recording.webm">
+        💾 Save recorded audio
+      </a>
+
+      <div class="controls" style="margin-top:6px">
+        <button id="audioAI" class="primary">Send with AI (Gemini)</button>
+        <button id="audioLocal">Send without AI (Whisper)</button>
+      </div>
+      <p class="hint">While recording, press any key at dialogue changes to embed a 1350 Hz beep marker directly into the audio track. Script Booth auto-detects beeps for both AI and offline Whisper.</p>
+    </section>
+
+    <!-- Cast, scenes, and camera -->
+    <details class="card">
+      <summary>🎬 Cast, scenes and camera</summary>
+      <div>
+        <label>Add character</label>
+        <div class="controls">
+          <input id="castAdd" placeholder="ALEX">
+          <button id="castAddBtn">Add</button>
+        </div>
+        <div id="castChips" class="hint"></div>
+
+        <label>Scene</label>
+        <div class="small-row">
+          <select id="sceneIn">
+            <option>INT.</option>
+            <option>EXT.</option>
+          </select>
+          <input id="scenePlace" placeholder="KITCHEN">
+        </div>
+        <div class="small-row">
+          <select id="sceneTime">
+            <option>DAY</option>
+            <option>NIGHT</option>
+            <option>MORNING</option>
+            <option>EVENING</option>
+            <option>CONTINUOUS</option>
+          </select>
+          <button id="addScene">Add scene</button>
+        </div>
+
+        <label>Camera angle</label>
+        <div class="small-row">
+          <select id="shot">
+            <option>CLOSE-UP</option>
+            <option>WIDE SHOT</option>
+            <option>MEDIUM SHOT</option>
+            <option>OVER THE SHOULDER</option>
+            <option>TWO SHOT</option>
+            <option>POV</option>
+            <option>LOW ANGLE</option>
+            <option>HIGH ANGLE</option>
+            <option>TRACKING</option>
+            <option>PAN</option>
+            <option>AERIAL</option>
+            <option>INSERT</option>
+            <option>DOLLY IN</option>
+          </select>
+          <input id="subject" placeholder="ALEX">
+        </div>
+        <button id="addShot" style="width:100%;margin-top:5px">Add camera angle</button>
+
+        <label style="margin-top:10px">
+          <input id="speakerColors" type="checkbox" style="width:auto;min-height:0;margin-right:6px"> Show speaker colors
+        </label>
+      </div>
+    </details>
+
+    <!-- Title page metadata -->
+    <details class="card">
+      <summary>📄 Title page details</summary>
+      <div>
+        <label for="titleField">Title</label>
+        <input id="titleField" placeholder="UNTITLED">
+        <label for="authorField">Written by</label>
+        <input id="authorField" placeholder="Author name">
+        <label for="contactField">Contact</label>
+        <input id="contactField" placeholder="Phone or email">
+      </div>
+    </details>
+
+    <!-- AI settings -->
+    <details class="card">
+      <summary>✨ AI settings</summary>
+      <div>
+        <label for="apiKey">Gemini API key</label>
+        <input id="apiKey" type="password" autocomplete="off" placeholder="Stored only in this browser">
+        <div class="controls" style="margin-top:6px">
+          <button id="saveKey">Save key</button>
+          <button id="testAI">Test AI</button>
+          <button id="clearKey" class="danger">Clear saved key</button>
+        </div>
+        <p id="aiStatus" class="status">AI optional. Rules engine is always available.</p>
+        <p class="hint">Gemini models (e.g. 2.5-flash) are discovered automatically for your key.</p>
+      </div>
+    </details>
+
+    <!-- Script management -->
+    <section class="card">
+      <h2>💾 Finish and save</h2>
+      <div class="small-row">
+        <div>
+          <label for="spacing">Line spacing</label>
+          <select id="spacing">
+            <option value="2">Double</option>
+            <option value="1.5">1.5</option>
+            <option value="1">Single</option>
+          </select>
+        </div>
+        <div>
+          <label for="cast">Cast list</label>
+          <input id="cast" placeholder="ALEX, SAM">
+        </div>
+      </div>
+      <div class="controls" style="margin-top:8px">
+        <button id="saveScript">Save script</button>
+        <button id="openScripts">Open saved</button>
+        <button id="newScript">New script</button>
+      </div>
+      <div id="savedList" class="hint"></div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="toolbar">
+      <button id="formatBtn">Format as film script</button>
+      <button id="undoFormat" disabled>Undo format</button>
+      <button id="recheckBtn">Re-check speakers</button>
+      <button id="newSheet">＋ New sheet</button>
+      <button id="clearBtn" class="danger">↻ Clear all</button>
+      <span class="spacer"></span>
+      <select id="zoom" style="width:auto">
+        <option value="">100%</option>
+        <option value="zoom-80">80%</option>
+        <option value="zoom-110">110%</option>
+      </select>
+      <button id="zoomOut">− Zoom</button>
+      <button id="zoomIn">＋ Zoom</button>
+      <button id="fit">Fit</button>
+      <button id="hidePanel">Hide panel</button>
+      <button id="copyBtn">Copy text</button>
+      <button id="fountainBtn">Save .fountain</button>
+      <button id="textBtn">Save .txt</button>
+      <button id="printBtn" class="primary">Print / PDF</button>
+    </div>
+
+    <div id="pages" class="pages"></div>
+
+    <!-- FEATURE 2: Dedicated sticky live recognition box in main flow -->
+    <div id="livebox" class="livebox" aria-live="polite">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <div id="livePageStatus">○ Not listening</div>
+        <div id="hearing" style="font-size:11px;color:var(--muted)">Hearing: …</div>
+      </div>
+      <div id="liveWords">
+        <span class="interim-word">Your recognized words will appear here.</span>
+      </div>
+      <div id="aiReading" style="font-size:11px;color:var(--muted);margin-top:4px">AI reading: …</div>
+    </div>
+  </main>
+</div>
+
+<button id="fab" class="fab primary" aria-label="Add new sheet">＋</button>
+
+<!-- A dedicated transcript page, activated without opening another file or browser tab. -->
+<section id="recognitionPage" class="recognition-page" hidden aria-label="Live word recognition">
+  <div class="recognition-wrap">
+    <header class="recognition-header">
+      <div><h2>Live Word Recognition</h2><p>Speak naturally. Press any key when the character changes.</p></div>
+      <button id="closeRecognition">← Return to Script Booth</button>
+    </header>
+    <div class="recognition-actions">
+      <button id="pageListenBtn" class="primary">🎙 Start listening</button>
+      <button id="pageMarkerBtn">↹ Dialogue change</button>
+      <select id="pageLiveMode" aria-label="Live processing mode"><option value="ai">With AI (Gemini)</option><option value="rules">Without AI (Rules)</option></select>
+    </div>
+    <div id="pageRecognitionStatus" class="recognition-status" aria-live="polite">○ Not listening</div>
+    <div id="pageLiveWords" class="recognition-words" aria-live="polite"><span class="interim-word">Your recognized words will appear here.</span></div>
+  </div>
+</section>
+
+<script>
+(() => {
+  'use strict';
+
+  const DEFAULT_API_KEY = ''; // No hardcoded key — enter yours in AI settings below
+  const $ = s => document.querySelector(s);
+
+  const state = {
+    lines: [],
+    title: 'UNTITLED',
+    author: '',
+    contact: '',
+    forcedPages: 0,
+    recognition: null,
+    listening: false,
+    finalWords: [],
+    interimWords: [],
+    markers: [],
+    segmentStart: 0,
+    turnQueue: Promise.resolve(),
+    recording: null,
+    audioBlob: null,
+    formatUndo: null,
+    clearArmed: false,
+    pendingCue: '',
+    expecting: 'UNKNOWN',
+    lastPredictionReason: 'Waiting for first key press',
+    language: 'en-US',
+    showColors: false,
+    places: [],
+    recordMarks: [],
+    beepContext: null,
+    beepDestination: null,
+    micStream: null,
+    systemStream: null,
+    recordMode: '',
+    liveTranscript: '',
+    lastFinalSnapshot: '',
+    recordStart: 0
+  };
+
+  const TYPES = ['scene', 'action', 'character', 'dialogue', 'parenthetical', 'shot', 'transition', 'break'];
+  const MODELS = ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite'];
+  // Keep the successful model for this browser session. Model discovery and trying
+  // retired models on every audio segment was the primary source of slow uploads.
+  const geminiCache = { key: '', models: null, preferred: '', expires: 0 };
+
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+
+  function status(id, text, kind = '') {
+    const el = $(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'status ' + kind;
+  }
+
+  function cast() {
+    return $('#cast').value.split(',').map(x => x.trim()).filter(Boolean);
+  }
+
+  function normalizeName(s) {
+    return (s || '').trim().replace(/\s+/g, ' ').toUpperCase();
+  }
+
+  function add(type, text, meta = {}) {
+    state.lines.push({
+      id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + Math.random()),
+      type,
+      text,
+      source: meta.source || 'rules',
+      speaker: meta.speaker || ''
+    });
+    persist();
+    render();
+  }
+
+  function command(text) {
+    const t = text.trim(), l = t.toLowerCase();
+    if (/^(new page|new sheet)\b/.test(l)) {
+      state.lines.push({ id: Date.now(), type: 'break', text: '' });
+      return true;
+    }
+    if (/^(interior|int\.?|exterior|ext\.?)\b/.test(l)) {
+      let x = t.replace(/^(interior|int\.?)/i, 'INT.').replace(/^(exterior|ext\.?)/i, 'EXT.').replace(/[,.]$/, '').toUpperCase();
+      if (!/ - (DAY|NIGHT|MORNING|EVENING)$/.test(x)) x += ' - DAY';
+      add('scene', x);
+      return true;
+    }
+    if (/^(camera |close ?up|wide shot|medium shot|two shot|pov\b)/.test(l)) {
+      add('shot', t.replace(/^camera\s+/i, '').replace(/[.]$/, '').toUpperCase());
+      return true;
+    }
+    if (/^(cut to|fade out|fade in|dissolve to|smash cut)/.test(l)) {
+      let x = t.replace(/[.]$/, '').toUpperCase();
+      if (x === 'FADE OUT') x = 'FADE OUT.';
+      else if (!x.endsWith(':') && !x.endsWith('.')) x += ':';
+      add('transition', x);
+      return true;
+    }
+    return false;
+  }
+
+  function decide(text) {
+    const blocks = [];
+    const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+
+    for (const original of sentences) {
+      const s = original.trim();
+      if (!s) continue;
+      if (command(s)) continue;
+
+      let cue = s.match(/^\s*([A-Za-z][\w -]{0,30})\s+(says|said|asks|asked|replies|replied|shouts|whispers|tells?|adds?)\s*(that)?\s*[:,]?\s*(.*)$/i);
+      let last = s.match(/^(.*?)[, ]+(said|asked|replied|whispered|shouted)\s+([A-Za-z][\w -]{0,30})[.!?]?$/i);
+      let speaker = '', delivery = '';
+
+      if (cue) {
+        speaker = normalizeName(cue[1]);
+        delivery = /whisper/i.test(cue[2]) ? '(whispers)' : (/shout/i.test(cue[2]) ? '(shouts)' : '');
+        state.lastPredictionReason = 'From spoken cue';
+        if (!cue[4].trim()) {
+          state.pendingCue = speaker;
+          state.expecting = speaker;
+          continue;
+        }
+      } else if (last) {
+        speaker = normalizeName(last[3]);
+        state.lastPredictionReason = 'From spoken cue';
+        cue = [, speaker, last[2], , last[1]];
+      }
+
+      const names = cast().map(normalizeName);
+      if (!speaker && state.pendingCue) {
+        speaker = state.pendingCue;
+        state.pendingCue = '';
+        state.lastPredictionReason = 'From pending spoken cue';
+      }
+
+      if (!speaker && names.length) {
+        const prev = [...state.lines].reverse().find(x => x.type === 'dialogue');
+        speaker = names.find(n => n !== prev?.speaker) || names[0];
+        state.lastPredictionReason = 'Alternating from cast list';
+      }
+
+      const clean = cue ? String(cue[4]).trim() : s;
+      if (!speaker) {
+        blocks.push({ type: 'action', text: clean });
+        state.lastPredictionReason = 'Action line (no speaker)';
+        continue;
+      }
+
+      if (!names.includes(speaker)) {
+        const raw = $('#cast');
+        raw.value = [...cast(), speaker].join(', ');
+        persist();
+        renderCast();
+      }
+
+      blocks.push({ type: 'character', text: speaker, speaker });
+      if (delivery) blocks.push({ type: 'parenthetical', text: delivery, speaker });
+      blocks.push({ type: 'dialogue', text: clean.replace(/^that\s+/i, ''), speaker, sure: false });
+
+      // Alternate prediction for next speaker
+      const remaining = cast().map(normalizeName).filter(n => n !== speaker);
+      state.expecting = remaining[0] || speaker;
+    }
+    return blocks;
+  }
+
+  function addTurn(text, source = 'rules') {
+    const before = state.lines.length;
+    const blocks = decide(text);
+    blocks.forEach(b => state.lines.push({
+      ...b,
+      id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + Math.random()),
+      source
+    }));
+    if (blocks.length) {
+      persist();
+      render();
+    }
+    return state.lines.length - before;
+  }
+
+  function pageChunks() {
+    const spacing = Number($('#spacing')?.value || 2);
+    const capacity = spacing === 2 ? 30 : (spacing === 1.5 ? 39 : 55);
+    let pages = [[]], weight = 0;
+
+    for (const line of state.lines) {
+      if (line.type === 'break') {
+        pages.push([]);
+        weight = 0;
+        continue;
+      }
+      const w = line.type === 'dialogue' ? Math.max(1, Math.ceil(line.text.length / 43)) :
+                line.type === 'action' ? Math.max(1, Math.ceil(line.text.length / 62)) : 1;
+      if (weight + w > capacity && pages.at(-1).length) {
+        pages.push([]);
+        weight = 0;
+      }
+      pages.at(-1).push(line);
+      weight += w;
+    }
+    while (pages.length < state.forcedPages + 1) pages.push([]);
+    return pages;
+  }
+
+  function lineHTML(l) {
+    const options = cast().concat(l.speaker && !cast().includes(l.speaker) ? [l.speaker] : []).map(n =>
+      `<option ${normalizeName(n) === l.speaker ? 'selected' : ''}>${esc(n)}</option>`
+    ).join('');
+    const tool = l.type !== 'break' ? `<span class="line-tools"><select data-speaker="${l.id}"><option value="">Action line</option>${options}<option>UNKNOWN</option></select><button data-del="${l.id}" title="Delete">×</button></span>` : '';
+    const color = `hsl(${Math.max(0, cast().map(normalizeName).indexOf(l.speaker)) * 41} 68% 52%)`;
+    const mark = (l.sure === false || l.speaker === 'UNKNOWN' || l.source === 'fallback') ? ' unsure' : (state.showColors && l.type === 'dialogue' ? ' speaker-color' : '');
+    return `<div class="script-line type-${l.type}${mark}" style="--speaker:${color}" data-id="${l.id}" contenteditable="${l.type !== 'break'}" spellcheck="true">${tool}<span>${esc(l.text)}</span>${l.source === 'ai' ? '<i class="ai-tag">AI</i>' : (l.source === 'fallback' || l.source === 'rules' ? '<i class="ai-tag">rules</i>' : '')}</div>`;
+  }
+
+  function render() {
+    document.documentElement.style.setProperty('--ls', $('#spacing')?.value || 2);
+    const pages = $('#pages');
+    const chunks = pageChunks();
+    let html = `<section class="page title-page"><div class="title-label">TITLE</div><input data-title value="${esc(state.title)}"><div class="title-label">WRITTEN BY</div><input data-author value="${esc(state.author)}"><div class="title-label">CONTACT</div><textarea data-contact>${esc(state.contact)}</textarea></section>`;
+
+    if (!state.lines.length) {
+      html += `<section class="page"><div class="empty">Your screenplay will appear here.<br>Start listening, type a turn, or record audio.</div></section>`;
+    } else {
+      html += chunks.map((p, i) => `<section class="page"><div class="page-number">${i ? i + 1 : ''}</div>${p.map(lineHTML).join('')}</section>`).join('');
+    }
+    pages.innerHTML = html;
+
+    const nextName = $('#nextName');
+    if (nextName) nextName.textContent = state.expecting || 'UNKNOWN';
+    const nextReason = $('#nextReason');
+    if (nextReason) nextReason.textContent = state.lastPredictionReason || 'Ready';
+
+    pages.querySelectorAll('[contenteditable]').forEach(e => e.onblur = () => {
+      const l = state.lines.find(x => x.id == e.dataset.id);
+      if (l) {
+        l.text = e.querySelector('span')?.innerText.trim() || '';
+        persist();
+      }
+    });
+
+    pages.querySelectorAll('[data-speaker]').forEach(e => e.onchange = () => {
+      const id = e.dataset.speaker, l = state.lines.find(x => x.id == id);
+      if (!l) return;
+      const s = normalizeName(e.value);
+      if (!s) {
+        l.type = 'action';
+        l.speaker = '';
+      } else {
+        l.type = 'dialogue';
+        l.speaker = s;
+        l.sure = true;
+        const char = state.lines.slice(0, state.lines.indexOf(l)).reverse().find(x => x.type === 'character');
+        if (char) char.text = char.speaker = s;
+      }
+      persist();
+      render();
+    });
+
+    pages.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+      state.lines = state.lines.filter(l => l.id != b.dataset.del);
+      persist();
+      render();
+    });
+
+    pages.querySelector('[data-title]')?.addEventListener('input', e => {
+      state.title = e.target.value;
+      if ($('#titleField')) $('#titleField').value = state.title;
+      persist();
+    });
+    pages.querySelector('[data-author]')?.addEventListener('input', e => {
+      state.author = e.target.value;
+      if ($('#authorField')) $('#authorField').value = state.author;
+      persist();
+    });
+    pages.querySelector('[data-contact]')?.addEventListener('input', e => {
+      state.contact = e.target.value;
+      if ($('#contactField')) $('#contactField').value = state.contact;
+      persist();
+    });
+  }
+
+  function renderCast() {
+    const el = $('#castChips');
+    if (!el) return;
+    const items = cast();
+    el.innerHTML = items.length ? items.map((n, i) =>
+      `<button data-remove-cast="${esc(n)}" style="min-height:26px;margin:3px 3px 0 0;font-size:11px;border-left:4px solid hsl(${i * 41} 68% 52%)">${esc(n)} ×</button>`
+    ).join('') : 'No cast added yet.';
+
+    el.querySelectorAll('[data-remove-cast]').forEach(b => b.onclick = () => {
+      $('#cast').value = cast().filter(n => n !== b.dataset.removeCast).join(', ');
+      persist();
+      renderCast();
+      render();
+    });
+  }
+
+  function persist() {
+    try {
+      localStorage.setItem('scriptBooth.current', JSON.stringify({
+        lines: state.lines,
+        title: state.title,
+        author: state.author,
+        contact: state.contact,
+        forcedPages: state.forcedPages
+      }));
+      localStorage.setItem('scriptBooth.cast', $('#cast').value);
+      localStorage.setItem('scriptBooth.language', state.language);
+    } catch (e) {
+      console.warn('Storage failed', e);
+    }
+  }
+
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem('scriptBooth.current') || 'null');
+      if (d) Object.assign(state, d);
+      $('#apiKey').value = localStorage.getItem('scriptBooth.key') || '';
+      geminiCache.preferred = localStorage.getItem('scriptBooth.geminiPreferredModel') || '';
+      $('#cast').value = localStorage.getItem('scriptBooth.cast') || '';
+      if (localStorage.getItem('scriptBooth.language')) {
+        state.language = localStorage.getItem('scriptBooth.language');
+        if ($('#language')) $('#language').value = state.language;
+      }
+      if ($('#titleField')) $('#titleField').value = state.title;
+      if ($('#authorField')) $('#authorField').value = state.author;
+      if ($('#contactField')) $('#contactField').value = state.contact;
+    } catch (e) {
+      console.warn(e);
+    }
+    renderCast();
+    render();
+  }
+
+  async function availableModels(key) {
+    const now = Date.now();
+    if (geminiCache.key === key && geminiCache.models && now < geminiCache.expires) return geminiCache.models;
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`);
+      if (!r.ok) throw Error(`discovery returned ${r.status}`);
+      const j = await r.json();
+      const usable = (j.models || []).filter(m =>
+        m.supportedGenerationMethods?.includes('generateContent') &&
+        /gemini/i.test(m.name) &&
+        !/image|tts|live|embedding/i.test(m.name)
+      ).map(m => m.name.replace(/^models\//, ''));
+      const models = [...new Set(usable)];
+      geminiCache.key = key;
+      geminiCache.models = models;
+      geminiCache.expires = now + 60 * 60 * 1000;
+      return models;
+    } catch (e) {
+      console.warn('Discovery fallback', e);
+      geminiCache.key = key;
+      geminiCache.models = [];
+      geminiCache.expires = now + 5 * 60 * 1000;
+      return [];
+    }
+  }
+
+  async function gemini(prompt, parts = []) {
+    const key = $('#apiKey').value.trim() || localStorage.getItem('scriptBooth.key') || '';
+    if (!key) throw Error('⚠️ No Gemini API key set. Open AI Settings in the left panel, paste your key from https://aistudio.google.com/apikey and click Save.');
+    const discovered = await availableModels(key);
+    const savedPreferred = geminiCache.preferred || '';
+    const models = [...new Set([savedPreferred, ...discovered, ...MODELS].filter(Boolean))];
+    let lastErr;
+
+    for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
+      const model = models[modelIndex];
+      // A verified model gets one short busy retry. Fallback models are tried once;
+      // this prevents a one-minute recording from waiting through many dead models.
+      const delays = model === savedPreferred ? [0, 800] : [0];
+      for (const attempt of delays) {
+        try {
+          if (attempt) await new Promise(ok => setTimeout(ok, attempt));
+          const body = {
+            contents: [{ parts: [...parts, { text: prompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              responseMimeType: 'application/json',
+              maxOutputTokens: 4096,
+              thinkingConfig: { thinkingLevel: 'low' }
+            }
+          };
+          let r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+            body: JSON.stringify(body)
+          });
+          if (r.status === 400 && /thinking/i.test(await r.clone().text())) {
+            delete body.generationConfig.thinkingConfig;
+            r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+              body: JSON.stringify(body)
+            });
+          }
+          if (!r.ok) {
+            const detail = await r.text();
+            if ([429, 500, 503].includes(r.status) || /high demand|busy/i.test(detail)) {
+              lastErr = Error(`${model}: ${r.status} ${detail}`);
+              continue;
+            }
+            throw Error(`${model}: ${r.status} ${detail}`);
+          }
+          const j = await r.json();
+          const txt = j.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text || '').join('');
+          if (!txt) throw Error('No response content from Gemini.');
+          const a = txt.indexOf('{'), b = txt.lastIndexOf('}');
+          geminiCache.key = key;
+          geminiCache.preferred = model;
+          try { localStorage.setItem('scriptBooth.geminiPreferredModel', model); } catch (_) {}
+          const aiTop = $('#aiTop');
+          if (aiTop) aiTop.textContent = `● AI ready — ${model}`;
+          return JSON.parse(a >= 0 && b >= a ? txt.slice(a, b + 1) : txt);
+        } catch (e) {
+          lastErr = e;
+          break;
+        }
+      }
+    }
+    if (lastErr && /401|API key not valid|UNAUTHENTICATED/i.test(lastErr.message)) {
+      throw Error('Saved Gemini key was rejected. Open AI settings, click “Clear saved key”, paste the new key, then click “Save key” and “Test AI”.');
+    }
+    throw lastErr || Error('Gemini request failed.');
+  }
+
+  function applyAIBlocks(blocks, source = 'ai') {
+    for (const b of blocks || []) {
+      if (!TYPES.includes(b.type) || (!b.text && b.type !== 'break')) continue;
+      const who = normalizeName(b.who || b.speaker || '');
+      if (b.type === 'dialogue') {
+        if (who) {
+          if (!cast().map(normalizeName).includes(who)) {
+            $('#cast').value = [...cast(), who].join(', ');
+            renderCast();
+          }
+          state.lines.push({
+            id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + Math.random()),
+            type: 'character',
+            text: who + (b.ext ? ` (${b.ext})` : ''),
+            speaker: who,
+            source
+          });
+        }
+        if (b.paren) {
+          state.lines.push({
+            id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + Math.random()),
+            type: 'parenthetical',
+            text: `(${b.paren.replace(/[()]/g, '')})`,
+            speaker: who,
+            source
+          });
+        }
+        state.lines.push({
+          id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + Math.random()),
+          type: 'dialogue',
+          text: b.text,
+          speaker: who || 'UNKNOWN',
+          sure: b.sure !== false,
+          source
+        });
+      } else {
+        state.lines.push({
+          id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + Math.random()),
+          type: b.type,
+          text: b.text,
+          speaker: who,
+          source
+        });
+      }
+    }
+  }
+
+  async function aiTurn(text) {
+    try {
+      status('#liveStatus', 'Asking Gemini…');
+      const context = state.lines.slice(-12).map(x => `${x.type}: ${x.text}`).join('\n');
+      const prompt = `Return JSON only: {"blocks":[{"type":"scene|shot|transition|action|dialogue|break","who":"NAME or null","ext":"","paren":"","text":"...","sure":true}],"expecting":"NAME or null"}. A narrator presses a key at every dialogue change. Convert this ONE finished spoken segment to screenplay blocks. Remove attribution cues such as "Alex says that". Never invent story content. Use scene INT./EXT. LOCATION - TIME, camera shots in caps, and transitions such as CUT TO:. Prefer direct dialogue. Cast: ${cast().join(', ') || 'unknown'}. Pending cue: ${state.pendingCue || 'none'}. Recent script:\n${context}\nNarration: ${text}`;
+      const j = await gemini(prompt);
+      if (!Array.isArray(j.blocks)) throw Error('Invalid AI response structure');
+      applyAIBlocks(j.blocks, 'ai');
+      state.expecting = normalizeName(j.expecting || state.expecting);
+      state.lastPredictionReason = 'Predicted by AI';
+      persist();
+      render();
+      status('#liveStatus', 'AI added the turn.');
+      return true;
+    } catch (e) {
+      console.warn(e);
+      addTurn(text, 'fallback');
+      status('#liveStatus', 'AI unavailable — added using rules.', 'warn');
+      return false;
+    }
+  }
+
+  // FEATURE 2: Real-time Live Word Recognition Rendering
+  function renderLiveTranscript() {
+    const liveWords = $('#liveWords');
+    const miniWords = $('#miniWords');
+    const livePageStatus = $('#livePageStatus');
+    const miniStatus = $('#miniStatus');
+
+    const final = esc(state.liveTranscript);
+    const interim = esc(state.interimWords.join(' '));
+
+    const fullContent = (final || interim)
+      ? `${final}${final && interim ? ' ' : ''}${interim ? `<span class="interim-word">${interim}</span>` : ''}`
+      : '<span class="interim-word">Your recognized words will appear here.</span>';
+
+    if (liveWords) liveWords.innerHTML = fullContent;
+
+    if (miniWords) {
+      const allWords = state.liveTranscript.split(/\s+/).filter(Boolean);
+      const recent = esc(allWords.slice(-12).join(' '));
+      miniWords.innerHTML = (recent || interim)
+        ? `${recent}${recent && interim ? ' ' : ''}${interim ? `<span class="interim-word">${interim}</span>` : ''}`
+        : '<span class="interim-word">Words will appear here.</span>';
+    }
+
+    const mode = $('#liveMode')?.value || 'ai';
+    const statusText = state.listening
+      ? `● Listening live (${mode === 'ai' ? 'AI mode' : 'rules mode'})`
+      : '○ Not listening';
+
+    if (livePageStatus) livePageStatus.textContent = statusText;
+    if (miniStatus) miniStatus.textContent = statusText;
+
+    const pageWords = $('#pageLiveWords');
+    const pageStatus = $('#pageRecognitionStatus');
+    const pageListen = $('#pageListenBtn');
+    if (pageWords) pageWords.innerHTML = fullContent;
+    if (pageStatus) pageStatus.textContent = statusText;
+    if (pageListen) {
+      pageListen.textContent = state.listening ? '■ Stop listening' : '🎙 Start listening';
+      pageListen.classList.toggle('pulse', state.listening);
+    }
+  }
+
+  // FEATURE 3 & 4: Process markers in live speech (AI mode vs synchronous Rules mode)
+  function processMarkers() {
+    while (state.markers.length && state.markers[0] <= state.finalWords.length) {
+      const end = state.markers.shift();
+      const segment = state.finalWords.slice(state.segmentStart, end).join(' ').trim();
+      state.segmentStart = end;
+
+      if (segment) {
+        const mode = $('#liveMode')?.value || 'ai';
+        if (mode === 'ai') {
+          state.turnQueue = state.turnQueue.then(() => aiTurn(segment));
+          const aiReading = $('#aiReading');
+          if (aiReading) aiReading.textContent = `AI reading: ${segment}`;
+        } else {
+          // FEATURE 4: Synchronous, instant rules-based mode
+          const added = addTurn(segment, 'rules');
+          status('#liveStatus', `Rules engine: added turn (${segment.split(/\s+/).length} words, ${added} lines).`);
+          const aiReading = $('#aiReading');
+          if (aiReading) aiReading.textContent = `Rules parsed: ${segment}`;
+        }
+      }
+    }
+  }
+
+  function setupSpeech() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      status('#liveStatus', 'Speech recognition is not supported in this browser. Try Chrome or Edge.', 'warn');
+      return null;
+    }
+    const r = new SR();
+    r.continuous = true;
+    r.interimResults = true;
+    r.lang = state.language || 'en-US';
+    let emptyEnds = 0, lastResult = Date.now();
+
+    r.onresult = e => {
+      let finals = [], interim = [];
+      for (let i = 0; i < e.results.length; i++) {
+        const s = e.results[i][0].transcript.trim();
+        if (e.results[i].isFinal) finals.push(s);
+        else interim.push(s);
+      }
+      const snapshot = finals.join(' ').trim();
+      if (snapshot.startsWith(state.lastFinalSnapshot)) {
+        const extra = snapshot.slice(state.lastFinalSnapshot.length).trim();
+        if (extra) state.liveTranscript += (state.liveTranscript ? ' ' : '') + extra;
+      } else if (snapshot) {
+        state.liveTranscript += (state.liveTranscript ? ' ' : '') + snapshot;
+      }
+      state.lastFinalSnapshot = snapshot;
+      state.finalWords = snapshot.split(/\s+/).filter(Boolean);
+      state.interimWords = interim.join(' ').trim().split(/\s+/).filter(Boolean);
+      lastResult = Date.now();
+      emptyEnds = 0;
+
+      const hearing = $('#hearing');
+      if (hearing) hearing.textContent = `Hearing: ${interim.join(' ') || '…'}`;
+
+      const mode = $('#liveMode')?.value || 'ai';
+      status('#liveStatus', `Listening (${mode} mode) — ${state.finalWords.length} words captured.`);
+      renderLiveTranscript();
+      processMarkers();
+    };
+
+    r.onend = () => {
+      if (!state.listening) return;
+      if (Date.now() - lastResult < 1500) emptyEnds++;
+      if (emptyEnds >= 4) {
+        state.listening = false;
+        $('#listenBtn').textContent = '🎙 Start listening';
+        $('#listenBtn').classList.remove('pulse');
+        status('#liveStatus', 'Speech recognition paused. Check microphone or connection.', 'error');
+        renderLiveTranscript();
+        return;
+      }
+      setTimeout(() => {
+        if (state.listening) {
+          try { r.start(); } catch (err) {}
+        }
+      }, 150);
+    };
+
+    r.onerror = e => {
+      const msg = e.error === 'not-allowed' ? 'Microphone permission denied.' :
+                  e.error === 'network' ? 'Speech recognition requires internet.' :
+                  `Speech error: ${e.error}`;
+      status('#liveStatus', msg, 'error');
+      renderLiveTranscript();
+    };
+
+    return r;
+  }
+
+  // FEATURE 1 & 5: Inject 1350 Hz sine beep into recording stream via Web Audio API
+  function emitMarkerBeep() {
+    const ctx = state.beepContext;
+    const dest = state.beepDestination;
+    if (!ctx || !dest) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = 1350;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.connect(gain);
+      gain.connect(dest);
+      osc.start(now);
+      osc.stop(now + 0.13);
+    } catch (e) {
+      console.warn('Marker beep injection failed:', e);
+    }
+  }
+
+  function splitTurn() {
+    const active = state.listening || (state.recording && state.recording.state === 'recording');
+    const card = $('#nextVoice');
+    if (card) {
+      card.classList.remove('flash');
+      void card.offsetWidth;
+      card.classList.add('flash');
+      setTimeout(() => card.classList.remove('flash'), 550);
+    }
+
+    if (!active) {
+      status('#liveStatus', 'Dialogue marker pressed. Start listening or recording to attach it to speech.', 'warn');
+      return;
+    }
+
+    if (state.listening) {
+      const marker = state.finalWords.length + state.interimWords.length;
+      state.markers.push(marker);
+      const c = $('#markerCount');
+      if (c) c.textContent = `✓ Marker ${state.markers.length} queued — waiting for finished speech`;
+      processMarkers();
+    }
+
+    if (state.recording && state.recording.state === 'recording') {
+      const timestamp = (performance.now() - state.recordStart) / 1000;
+      state.recordMarks.push(timestamp);
+      emitMarkerBeep();
+      const c = $('#markerCount');
+      if (c) c.textContent = `✓ Marker ${state.recordMarks.length} recorded + beep embedded`;
+      $('#audioName').textContent = `Recording… ${state.recordMarks.length} dialogue changes marked and embedded as beeps.`;
+    }
+  }
+
+  function download(name, text, type) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type }));
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  function plain() {
+    let out = `${state.title}\nWritten by ${state.author}\n${state.contact}\n\n`;
+    for (const l of state.lines) {
+      if (l.type === 'break') out += '\f\n';
+      else out += `${l.text}\n`;
+    }
+    return out;
+  }
+
+  function fountain() {
+    return state.lines.map(l => {
+      if (l.type === 'scene') return l.text;
+      if (l.type === 'character') return l.text;
+      if (l.type === 'parenthetical') return l.text;
+      if (l.type === 'transition') return `> ${l.text}`;
+      if (l.type === 'shot') return `!${l.text}`;
+      if (l.type === 'break') return '\n';
+      return l.text;
+    }).join('\n');
+  }
+
+  function wav16(samples, rate = 16000) {
+    const buffer = new ArrayBuffer(44 + samples.length * 2);
+    const v = new DataView(buffer);
+    const put = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    put(0, 'RIFF');
+    v.setUint32(4, 36 + samples.length * 2, true);
+    put(8, 'WAVEfmt ');
+    v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true);
+    v.setUint16(22, 1, true);
+    v.setUint32(24, rate, true);
+    v.setUint32(28, rate * 2, true);
+    v.setUint16(32, 2, true);
+    v.setUint16(34, 16, true);
+    put(36, 'data');
+    v.setUint32(40, samples.length * 2, true);
+    for (let i = 0; i < samples.length; i++) {
+      v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 0x7fff, true);
+    }
+    return new Blob([buffer], { type: 'audio/wav' });
+  }
+
+  async function base64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function mono16k(audio) {
+    const ratio = audio.sampleRate / 16000;
+    const len = Math.ceil(audio.length / ratio);
+    const out = new Float32Array(len);
+    const channels = [];
+    for (let c = 0; c < audio.numberOfChannels; c++) channels.push(audio.getChannelData(c));
+    for (let i = 0; i < len; i++) {
+      const a = Math.floor(i * ratio), b = Math.min(audio.length, Math.floor((i + 1) * ratio) || a + 1);
+      let sum = 0, n = 0;
+      for (let j = a; j < b; j++) {
+        for (const ch of channels) { sum += ch[j]; n++; }
+      }
+      out[i] = n ? sum / n : 0;
+    }
+    return out;
+  }
+
+  function splitAtQuiet(samples, rate) {
+    const ideal = 360 * rate, min = 330 * rate, window = Math.round(0.5 * rate);
+    const cuts = [], end = samples.length;
+    let start = 0;
+    while (end - start > ideal) {
+      let best = Math.min(end, start + ideal), energy = Infinity;
+      for (let p = start + min; p <= Math.min(end - window, start + ideal); p += window) {
+        let e = 0;
+        for (let k = p; k < p + window; k++) e += samples[k] * samples[k];
+        if (e < energy) { energy = e; best = p + window; }
+      }
+      cuts.push(best);
+      start = best;
+    }
+    cuts.push(end);
+    return cuts;
+  }
+
+  const FAST_CHUNK_SECONDS = 30;
+  // Do not leave a stalled request on screen for minutes. A timed-out chunk moves
+  // into the normal model fallback path on the next attempt instead.
+  const GEMINI_CHUNK_TIMEOUT_MS = 45000;
+  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+  async function fingerprint(blob) {
+    const digest = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+    return [...new Uint8Array(digest)].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+  function readAudioCache(hash) {
+    try { return JSON.parse(localStorage.getItem(`scriptBooth.audioCache.${hash}`) || 'null'); } catch (_) { return null; }
+  }
+  function saveAudioCache(hash, value) {
+    try { localStorage.setItem(`scriptBooth.audioCache.${hash}`, JSON.stringify(value)); } catch (e) { console.warn('Audio cache could not be saved.', e); }
+  }
+  async function withTimeout(task, ms, label) {
+    let timer;
+    try {
+      return await Promise.race([
+        task,
+        new Promise((_, reject) => { timer = setTimeout(() => reject(Error(`${label} took longer than ${Math.round(ms / 1000)} seconds.`)), ms); })
+      ]);
+    } finally { clearTimeout(timer); }
+  }
+
+  // Large-file preparation stays off the main thread. It produces 16 kHz mono WAV
+  // chunks, using a quiet point near each six-minute boundary.
+  async function prepareWavPartsInWorker(decoded) {
+    const channels = Array.from({ length: decoded.numberOfChannels }, (_, i) => decoded.getChannelData(i).slice());
+    const transfers = channels.map(c => c.buffer);
+    const workerCode = `
+      self.onmessage = ({data}) => {
+        try {
+          const { channels, sampleRate } = data;
+          const input = channels.map(b => new Float32Array(b));
+          const target = 16000, ratio = sampleRate / target, length = Math.ceil(input[0].length / ratio);
+          const mono = new Float32Array(length);
+          self.postMessage({type:'progress', text:'Downsampling audio in the background…'});
+          for (let i=0;i<length;i++) {
+            const a=Math.floor(i*ratio), b=Math.min(input[0].length, Math.max(a+1,Math.floor((i+1)*ratio)));
+            let sum=0,n=0; for(let j=a;j<b;j++) for(const ch of input){sum+=ch[j];n++;} mono[i]=n?sum/n:0;
+          }
+          const rate=16000, ideal=360*rate, min=330*rate, win=Math.round(.5*rate), cuts=[]; let start=0;
+          while(mono.length-start>ideal){let best=Math.min(mono.length,start+ideal), energy=Infinity; for(let p=start+min;p<=Math.min(mono.length-win,start+ideal);p+=win){let e=0;for(let k=p;k<p+win;k++)e+=mono[k]*mono[k];if(e<energy){energy=e;best=p+win;}}cuts.push(best);start=best;} cuts.push(mono.length);
+          const wav = samples => { const out=new ArrayBuffer(44+samples.length*2),v=new DataView(out),put=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};put(0,'RIFF');v.setUint32(4,36+samples.length*2,true);put(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);put(36,'data');v.setUint32(40,samples.length*2,true);for(let i=0;i<samples.length;i++)v.setInt16(44+i*2,Math.max(-1,Math.min(1,samples[i]))*32767,true);return out;};
+          const parts=[]; start=0; for(const end of cuts){parts.push({buffer:wav(mono.slice(start,end)),start:start/rate,end:end/rate});start=end;}
+          self.postMessage({type:'done', parts}, parts.map(p=>p.buffer));
+        } catch(e) { self.postMessage({type:'error', error:e.message||String(e)}); }
+      };`;
+    const url = URL.createObjectURL(new Blob([workerCode], { type: 'text/javascript' }));
+    const worker = new Worker(url);
+    try {
+      return await new Promise((resolve, reject) => {
+        worker.onmessage = e => {
+          if (e.data.type === 'progress') status('#liveStatus', e.data.text);
+          if (e.data.type === 'done') resolve(e.data.parts.map(p => ({ ...p, blob: new Blob([p.buffer], { type: 'audio/wav' }) })));
+          if (e.data.type === 'error') reject(Error(e.data.error));
+        };
+        worker.onerror = reject;
+        worker.postMessage({ channels: transfers, sampleRate: decoded.sampleRate }, transfers);
+      });
+    } finally { worker.terminate(); URL.revokeObjectURL(url); }
+  }
+
+  // Detect 1350 Hz marker beeps in audio buffer using Goertzel algorithm
+  function detectMarkerBeeps(samples, rate) {
+    const hz = 1350;
+    const n = Math.max(128, Math.round(rate * 0.08));
+    const hop = Math.max(64, Math.round(rate * 0.03));
+    const w = 2 * Math.cos(2 * Math.PI * hz / rate);
+    const hits = [];
+    let last = -1;
+
+    for (let start = 0; start + n < samples.length; start += hop) {
+      let s0 = 0, s1 = 0, power = 0;
+      for (let i = 0; i < n; i++) {
+        const x = samples[start + i];
+        power += x * x;
+        const s = x + w * s0 - s1;
+        s1 = s0;
+        s0 = s;
+      }
+      const tone = s1 * s1 + s0 * s0 - w * s0 * s1;
+      const score = tone / (power * n + 1e-9);
+      if (score > 0.20 && (start / rate - last) > 0.28) {
+        hits.push(start / rate);
+        last = start / rate;
+      }
+    }
+    return hits;
+  }
+
+  // FEATURE 6: Analyse uploaded audio/video file for embedded marker beeps
+  async function analyseUploadedMarkers(file) {
+    try {
+      status('#liveStatus', 'Scanning upload for dialogue-marker beeps…');
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const arrayBuf = await file.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(arrayBuf.slice(0));
+      const markers = detectMarkerBeeps(mono16k(decoded), 16000);
+      await ctx.close?.();
+
+      state.recordMarks = markers;
+      const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+      if (markers.length) {
+        $('#audioName').textContent = `${file.name} — ${sizeMB} MB; ${markers.length} marker beep${markers.length === 1 ? '' : 's'} detected.`;
+        status('#liveStatus', `Found ${markers.length} dialogue-change beep markers in the upload.`);
+      } else {
+        $('#audioName').textContent = `${file.name} — ${sizeMB} MB; no Script Booth marker beeps found.`;
+        status('#liveStatus', 'No marker beeps found; AI will use spoken attribution cues.', 'warn');
+      }
+    } catch (e) {
+      console.warn('Marker analysis error:', e);
+      state.recordMarks = [];
+      $('#audioName').textContent = `${file.name} — ready (marker scan unavailable).`;
+    }
+  }
+
+  // FEATURE 1 & 5: System screen/video recording with beep injection
+  async function startSystemRecording() {
+    if (state.recording && state.recording.state === 'recording') {
+      state.recording.stop();
+      return;
+    }
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      status('#liveStatus', 'Screen/system recording is not supported in this browser.', 'error');
+      return;
+    }
+
+    try {
+      const display = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      if (!display.getAudioTracks().length) {
+        display.getTracks().forEach(t => t.stop());
+        status('#liveStatus', 'No audio was shared. Please check "Share system audio".', 'warn');
+        return;
+      }
+
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const dest = ctx.createMediaStreamDestination();
+      const source = ctx.createMediaStreamSource(display);
+      source.connect(dest);
+
+      const combined = new MediaStream([...display.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+      const chunks = [];
+      const rec = new MediaRecorder(combined, {
+        mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm'
+      });
+
+      state.recording = rec;
+      state.recordMode = 'system';
+      state.systemStream = display;
+      state.beepContext = ctx;
+      state.beepDestination = dest;
+      state.recordStart = performance.now();
+      state.recordMarks = [];
+
+      rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+      rec.onstop = () => {
+        state.audioBlob = new Blob(chunks, { type: rec.mimeType || 'video/webm' });
+        const url = URL.createObjectURL(state.audioBlob);
+        const player = $('#audioPlayer'), save = $('#audioSave');
+        if (player) { player.src = url; player.hidden = false; }
+        if (save) {
+          save.href = url;
+          save.download = 'script-booth-system-recording.webm';
+          save.textContent = `💾 Save recorded video (${(state.audioBlob.size / 1024 / 1024).toFixed(1)} MB)`;
+          save.hidden = false;
+        }
+        $('#audioName').textContent = `System recording saved — ${state.recordMarks.length} dialogue markers embedded as beeps.`;
+        $('#audioAI').textContent = 'Send recording with AI';
+        $('#audioLocal').textContent = 'Send without AI (Whisper)';
+        display.getTracks().forEach(t => t.stop());
+        ctx.close().catch(() => {});
+        state.beepContext = null;
+        state.beepDestination = null;
+        state.recording = null;
+        $('#systemRecordBtn').textContent = '🖥 Record system audio/video';
+        $('#systemRecordBtn').classList.remove('pulse');
+      };
+
+      rec.start(1000);
+      display.getVideoTracks()[0].onended = () => {
+        if (rec.state === 'recording') rec.stop();
+      };
+      $('#systemRecordBtn').textContent = '■ Stop system recording';
+      $('#systemRecordBtn').classList.add('pulse');
+      $('#audioName').textContent = 'Recording system audio/video. Press any key at dialogue changes to embed marker beeps.';
+    } catch (e) {
+      status('#liveStatus', `System recording failed: ${e.message}`, 'error');
+    }
+  }
+
+  // FEATURE 1, 5, 6: Send audio with AI (Gemini) with embedded marker timestamps
+  async function audioWithAI() {
+    const file = state.audioBlob;
+    if (!file) {
+      status('#liveStatus', 'Record or upload an audio or video file first.', 'warn');
+      return;
+    }
+
+    try {
+      const startedAt = Date.now();
+      status('#liveStatus', 'Checking the local audio-result cache…');
+      const hash = await fingerprint(file);
+      const cached = readAudioCache(hash);
+      if (cached?.blocks?.length) {
+        // The dedicated cache path deliberately holds the result for ten seconds,
+        // giving a predictable loading screen for a previously processed upload.
+        status('#liveStatus', 'Known audio found — loading saved screenplay…');
+        await sleep(Math.max(0, 10000 - (Date.now() - startedAt)));
+        applyAIBlocks(cached.blocks, 'ai');
+        state.expecting = cached.expecting || state.expecting;
+        persist(); render();
+        status('#liveStatus', 'Cached result loaded after 10 seconds.');
+        return;
+      }
+
+      status('#liveStatus', 'Preparing audio — output will appear every 30 seconds…');
+      const bytes = await file.arrayBuffer();
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const decoded = await ctx.decodeAudioData(bytes.slice(0));
+      const samples = mono16k(decoded);
+      // Thirty-second chunks give the user a visible screenplay update much sooner
+      // than the former one-six-minute request. Split at quiet points within each
+      // final three seconds when possible.
+      const chunk = FAST_CHUNK_SECONDS * 16000;
+      const cuts = [];
+      let cursor = 0;
+      while (samples.length - cursor > chunk) {
+        const from = Math.max(cursor + Math.round(25 * 16000), cursor + 1);
+        const to = Math.min(samples.length - 1, cursor + chunk);
+        let best = to, energy = Infinity;
+        for (let p = from; p <= to; p += 8000) {
+          let e = 0;
+          for (let k = p; k < Math.min(samples.length, p + 8000); k++) e += samples[k] * samples[k];
+          if (e < energy) { energy = e; best = Math.min(samples.length, p + 8000); }
+        }
+        cuts.push(best); cursor = best;
+      }
+      cuts.push(samples.length);
+      const parts = [];
+      let start = 0;
+
+      for (const end of cuts) {
+        parts.push({
+          blob: wav16(samples.slice(start, end)),
+          start: start / 16000,
+          end: end / 16000
+        });
+        start = end;
+      }
+      await ctx.close?.();
+      const cachedBlocks = [];
+
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        status('#liveStatus', `Uploading 30-second part ${i + 1} of ${parts.length} to Gemini…`);
+        const marks = state.recordMarks
+          .filter(t => t >= part.start && t < part.end)
+          .map(t => (t - part.start).toFixed(1));
+
+        const marksText = marks.length
+          ? `Each key press emitted a beep at these times (seconds): ${marks.join(', ')}. Use these beep times as dialogue-change boundaries.`
+          : (state.recordMarks.length
+              ? 'No marker beeps fell in this audio segment; use spoken cues.'
+              : 'No dialogue marker beeps were recorded; use spoken attribution cues.');
+
+        const context = state.lines.slice(-10).map(x => `${x.type}: ${x.text}`).join('\n');
+        const prompt = `Transcribe this audio and convert to screenplay JSON:
+{
+  "blocks": [
+    {"type": "scene|shot|transition|action|dialogue|break", "who": "NAME or null", "ext": "", "paren": "", "text": "...", "sure": true}
+  ],
+  "expecting": "NAME or null"
+}
+Part ${i + 1} of ${parts.length}. Continue the screenplay without repeating earlier lines.
+${marksText}
+Rules:
+- Remove narrator attribution cues ("Alex says that") from dialogue text.
+- Use spoken name cues and beep timestamps together to assign speakers.
+- Never invent story content.
+- Cast: ${cast().join(', ') || 'unknown'}.
+- Previous script:
+${context || 'Beginning of script.'}`;
+
+        const j = await withTimeout(gemini(prompt, [{
+          inline_data: { mime_type: 'audio/wav', data: await base64(part.blob) }
+        }]), GEMINI_CHUNK_TIMEOUT_MS, `Part ${i + 1}`);
+
+        if (!Array.isArray(j.blocks)) throw Error(`Part ${i + 1} returned invalid blocks.`);
+        cachedBlocks.push(...j.blocks);
+        applyAIBlocks(j.blocks, 'ai');
+        state.expecting = normalizeName(j.expecting || state.expecting);
+        state.lastPredictionReason = 'Speaker classified by AI';
+        persist();
+        render();
+        status('#liveStatus', `Part ${i + 1} complete — screenplay updated. ${i + 1 < parts.length ? 'Starting the next 30-second part…' : ''}`);
+      }
+
+      saveAudioCache(hash, { blocks: cachedBlocks, expecting: state.expecting, createdAt: new Date().toISOString() });
+      status('#liveStatus', `Audio transcription complete — ${parts.length} part${parts.length === 1 ? '' : 's'} processed.`);
+    } catch (e) {
+      console.error(e);
+      status('#liveStatus', `Audio AI failed: ${e.message}`, 'error');
+    }
+  }
+
+  // FEATURE 5 & 6: Non-AI transcription using Transformers.js Whisper in a Web Worker
+  async function localAudio() {
+    if (!state.audioBlob) {
+      status('#liveStatus', 'Record or upload an audio file first.', 'warn');
+      return;
+    }
+
+    status('#liveStatus', 'Decoding audio for local Whisper processing…');
+
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const decoded = await ctx.decodeAudioData(await state.audioBlob.arrayBuffer());
+      const samples = mono16k(decoded);
+      await ctx.close?.();
+
+      status('#liveStatus', 'Loading in-browser Whisper model (first run downloads model)…');
+
+      const workerCode = `
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+        env.allowLocalModels = false;
+        env.useBrowserCache = true;
+
+        self.onmessage = async ({ data }) => {
+          try {
+            self.postMessage({ type: 'status', msg: 'Downloading / loading Whisper model…' });
+            const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
+              quantized: true
+            });
+            self.postMessage({ type: 'status', msg: 'Transcribing speech locally…' });
+            const result = await transcriber(data.audio, {
+              return_timestamps: 'word',
+              chunk_length_s: 30,
+              stride_length_s: 5
+            });
+            self.postMessage({
+              type: 'done',
+              chunks: result.chunks || [{ text: result.text || '', timestamp: [0, data.audio.length / 16000] }]
+            });
+          } catch (err) {
+            self.postMessage({ type: 'error', error: err.message || String(err) });
+          }
+        };
+      `;
+
+      const workerBlob = new Blob([workerCode], { type: 'text/javascript' });
+      const worker = new Worker(URL.createObjectURL(workerBlob), { type: 'module' });
+
+      const chunks = await new Promise((resolve, reject) => {
+        worker.onmessage = e => {
+          if (e.data.type === 'status') {
+            status('#liveStatus', e.data.msg);
+          } else if (e.data.type === 'done') {
+            resolve(e.data.chunks);
+          } else if (e.data.type === 'error') {
+            reject(Error(e.data.error));
+          }
+        };
+        worker.onerror = ev => reject(new Error(ev.message || 'Worker failed to load or crashed'));
+        worker.postMessage({ audio: samples });
+      });
+
+      worker.terminate();
+
+      // Split transcript at marker timestamps, apply rules engine per turn
+      const marks = [...state.recordMarks].sort((a, b) => a - b);
+      let turnStart = 0;
+      let addedTurns = 0;
+
+      if (marks.length === 0) {
+        // No markers: combine all chunks into sentences
+        const fullText = chunks.map(c => c.text.trim()).join(' ').trim();
+        if (fullText) {
+          addTurn(fullText, 'rules');
+          addedTurns++;
+        }
+      } else {
+        for (let i = 0; i <= marks.length; i++) {
+          const turnEnd = i < marks.length ? marks[i] : Infinity;
+          const words = chunks
+            .filter(c => {
+              const t0 = Array.isArray(c.timestamp) ? c.timestamp[0] : (c.start ?? 0);
+              return t0 >= turnStart && t0 < turnEnd;
+            })
+            .map(c => c.text.trim())
+            .join(' ')
+            .trim();
+
+          if (words) {
+            addTurn(words, 'rules');
+            addedTurns++;
+          }
+          turnStart = turnEnd;
+        }
+      }
+
+      status('#liveStatus', `Whisper transcription complete — ${addedTurns} turns parsed without AI.`);
+    } catch (e) {
+      console.warn('Local Whisper failed:', e);
+      const msg = (e && e.message) ? e.message : String(e);
+      status('#liveStatus', `Local Whisper error: ${msg}. You can send with Gemini AI or paste text manually.`, 'error');
+    }
+  }
+
+  // Hook up event listeners
+  function setupEventListeners() {
+    // Dedicated live-recognition page mirrors the normal live controls.
+    $('#openRecognition').onclick = () => { $('#recognitionPage').hidden = false; $('#pageLiveMode').value = $('#liveMode').value; renderLiveTranscript(); };
+    $('#closeRecognition').onclick = () => { $('#recognitionPage').hidden = true; };
+    $('#pageMarkerBtn').onclick = splitTurn;
+    $('#pageLiveMode').onchange = e => { $('#liveMode').value = e.target.value; $('#liveMode').dispatchEvent(new Event('change')); };
+    $('#pageListenBtn').onclick = () => $('#listenBtn').click();
+
+    // Live narration buttons
+    $('#listenBtn').onclick = () => {
+      if (!state.recognition) state.recognition = setupSpeech();
+      if (!state.recognition) return;
+
+      if (state.listening) {
+        state.markers.push(state.finalWords.length);
+        processMarkers();
+        state.listening = false;
+        state.recognition.stop();
+        $('#listenBtn').textContent = '🎙 Start listening';
+        $('#listenBtn').classList.remove('pulse');
+        status('#liveStatus', 'Listening stopped.');
+        renderLiveTranscript();
+        return;
+      }
+
+      state.finalWords = [];
+      state.interimWords = [];
+      state.markers = [];
+      state.segmentStart = 0;
+      state.listening = true;
+      state.recognition.lang = state.language;
+      try { state.recognition.start(); } catch (e) {}
+      $('#listenBtn').textContent = '■ Stop listening';
+      $('#listenBtn').classList.add('pulse');
+      setupMediaButtons();
+      renderLiveTranscript();
+    };
+
+    $('#nextBtn').onclick = splitTurn;
+    $('#signalBtn').onclick = splitTurn;
+
+    $('#language').onchange = e => {
+      state.language = e.target.value;
+      if (state.recognition) state.recognition.lang = state.language;
+      persist();
+    };
+
+    $('#liveMode').onchange = () => {
+      renderLiveTranscript();
+      const mode = $('#liveMode').value;
+      status('#liveStatus', `Live mode switched to: ${mode === 'ai' ? 'With AI (Gemini)' : 'Without AI (Rules Engine)'}.`);
+    };
+
+    // Type turn handlers
+    $('#addTyped').onclick = () => {
+      const t = $('#typedText').value.trim();
+      if (t) {
+        addTurn(t, 'rules');
+        $('#typedText').value = '';
+      }
+    };
+
+    $('#typedText').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        $('#addTyped').click();
+      }
+    });
+
+    $('#voiceCommand').onclick = () => {
+      const t = $('#typedText').value.trim();
+      if (t) {
+        if (!command(t)) status('#liveStatus', 'Not a recognized scene, shot, or transition command.', 'warn');
+        else {
+          persist();
+          render();
+          $('#typedText').value = '';
+        }
+      }
+    };
+
+    // FEATURE 1 & 5: Mic Recording with 1350 Hz Beep Destination
+    $('#recordBtn').onclick = async () => {
+      if (state.recording && state.recording.state === 'recording') {
+        state.recording.stop();
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const dest = ctx.createMediaStreamDestination();
+        const source = ctx.createMediaStreamSource(stream);
+        source.connect(dest);
+
+        const chunks = [];
+        const rec = new MediaRecorder(dest.stream);
+
+        state.recording = rec;
+        state.recordMode = 'mic';
+        state.micStream = stream;
+        state.beepContext = ctx;
+        state.beepDestination = dest;
+        state.recordStart = performance.now();
+        state.recordMarks = [];
+
+        rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+        rec.onstop = () => {
+          state.audioBlob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+          const url = URL.createObjectURL(state.audioBlob);
+          const player = $('#audioPlayer'), save = $('#audioSave');
+
+          if (player) {
+            player.src = url;
+            player.hidden = false;
+          }
+          if (save) {
+            save.href = url;
+            save.download = 'script-booth-mic-recording.webm';
+            save.textContent = `💾 Save recorded audio (${(state.audioBlob.size / 1024 / 1024).toFixed(1)} MB)`;
+            save.hidden = false;
+          }
+
+          $('#audioName').textContent = `Recorded ${(state.audioBlob.size / 1024 / 1024).toFixed(1)} MB — ${state.recordMarks.length} dialogue changes marked and embedded as beeps.`;
+          $('#audioAI').textContent = 'Send recording with AI';
+          $('#audioLocal').textContent = 'Send without AI (Whisper)';
+          $('#recordBtn').textContent = '● Record audio';
+          $('#recordBtn').classList.remove('pulse');
+
+          stream.getTracks().forEach(t => t.stop());
+          ctx.close().catch(() => {});
+          state.micStream = null;
+          state.beepContext = null;
+          state.beepDestination = null;
+          state.recording = null;
+        };
+
+        rec.start(1000);
+        $('#recordBtn').textContent = '■ Stop recording';
+        $('#recordBtn').classList.add('pulse');
+        $('#audioName').textContent = 'Recording microphone… Press any key at dialogue changes to embed marker beeps.';
+      } catch (e) {
+        status('#liveStatus', `Microphone recording failed: ${e.message}`, 'error');
+      }
+    };
+
+    $('#systemRecordBtn').onclick = startSystemRecording;
+
+    // ─── SMART AUDIO CACHE SYSTEM ────────────────────────────────────────────
+    // A fingerprint (name + size) identifies an audio file uniquely.
+    // First successful AI processing auto-saves the result to localStorage.
+    // On re-upload of the same file: 10-second branded loading → instant result.
+    // All other/new files: normal Gemini / Whisper processing path.
+
+    function audioCacheKey(file) {
+      return `scriptBooth.audioCache::${file.name}::${file.size}`;
+    }
+
+    function applyCachedBlocks(cachedData) {
+      const { blocks, expecting, castList } = cachedData;
+      // Merge cast
+      if (Array.isArray(castList) && castList.length) {
+        const merged = [...new Set([...cast(), ...castList])].filter(Boolean);
+        $('#cast').value = merged.join(', ');
+        renderCast();
+      }
+      applyAIBlocks(blocks, 'ai');
+      if (expecting) {
+        state.expecting = normalizeName(expecting);
+        state.lastPredictionReason = 'Speaker classified by AI (cached)';
+      }
+      persist();
+      render();
+      status('#liveStatus', '✅ Pre-processed result applied!');
+      $('#audioAI').disabled = false;
+      $('#audioLocal').disabled = false;
+      $('#audioAI').textContent = 'Send upload with AI';
+      $('#audioLocal').textContent = 'Send without AI (Whisper)';
+    }
+
+    function runCachedCountdown(cachedData, fileName) {
+      $('#audioAI').disabled = true;
+      $('#audioLocal').disabled = true;
+      let remaining = 10;
+
+      const refreshUI = () => {
+        status('#liveStatus',
+          `⚡ Pre-processed result found for "${fileName}" — displaying in ${remaining}s…`);
+        $('#audioAI').textContent = `⏳ Loading cached result… ${remaining}s`;
+      };
+
+      refreshUI();
+      const timer = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(timer);
+          applyCachedBlocks(cachedData);
+        } else {
+          refreshUI();
+        }
+      }, 1000);
+    }
+
+    // Wraps audioWithAI to auto-cache on first successful run
+    async function audioWithAICached() {
+      const fileSnap = state.audioBlob;
+      const cacheKey = fileSnap ? audioCacheKey(fileSnap) : null;
+      const linesBefore = state.lines.length;
+
+      await audioWithAI();                     // original processing
+
+      const linesAfter = state.lines.length;
+      if (cacheKey && linesAfter > linesBefore) {
+        try {
+          const newBlocks = state.lines.slice(linesBefore).map(l => ({
+            type: l.type,
+            who: l.speaker || null,
+            text: l.text,
+            sure: l.sure !== false,
+            paren: '',
+            ext: ''
+          }));
+          const entry = {
+            blocks: newBlocks,
+            expecting: state.expecting,
+            castList: cast(),
+            cachedAt: new Date().toISOString(),
+            fileName: fileSnap.name,
+            fileSize: fileSnap.size
+          };
+          localStorage.setItem(cacheKey, JSON.stringify(entry));
+          status('#liveStatus',
+            '✅ Audio transcription complete — result cached for instant replay on next upload!');
+        } catch (_) { /* storage full or private mode */ }
+      }
+    }
+
+    // FEATURE 6: Audio Upload — with smart pre-result cache
+    $('#audioFile').onchange = async e => {
+      const f = e.target.files[0];
+      if (!f) return;
+      state.audioBlob = f;
+      state.recordMode = 'upload';
+
+      const player = $('#audioPlayer');
+      if (player) {
+        player.src = URL.createObjectURL(f);
+        player.hidden = false;
+      }
+      const save = $('#audioSave');
+      if (save) save.hidden = true;
+
+      $('#audioAI').textContent = 'Send upload with AI';
+      $('#audioLocal').textContent = 'Send without AI (Whisper)';
+
+      // ── Cache hit? ──────────────────────────────────────────────────────────
+      const cacheKey = audioCacheKey(f);
+      const rawCache = localStorage.getItem(cacheKey);
+      if (rawCache) {
+        try {
+          const cachedData = JSON.parse(rawCache);
+          const sizeMB = (f.size / 1024 / 1024).toFixed(1);
+          const when = cachedData.cachedAt
+            ? new Date(cachedData.cachedAt).toLocaleString() : '';
+          $('#audioName').textContent =
+            `${f.name} — ${sizeMB} MB  ⚡ PRE-PROCESSED (cached ${when})`;
+          runCachedCountdown(cachedData, f.name);
+          return; // skip normal marker scan for cached files
+        } catch (_) { /* corrupt cache — fall through to normal flow */ }
+      }
+
+      // ── No cache — normal flow ───────────────────────────────────────────────
+      await analyseUploadedMarkers(f);
+    };
+
+    $('#audioAI').onclick = audioWithAICached;   // caching wrapper
+    $('#audioLocal').onclick = localAudio;
+
+    // AI Settings handlers
+    $('#saveKey').onclick = () => {
+      const k = $('#apiKey').value.trim();
+      localStorage.setItem('scriptBooth.key', k);
+      geminiCache.key = ''; geminiCache.models = null; geminiCache.preferred = ''; geminiCache.expires = 0;
+      status('#aiStatus', k ? 'Key saved in this browser.' : 'Key cleared.');
+    };
+
+    $('#clearKey').onclick = () => {
+      localStorage.removeItem('scriptBooth.key');
+      localStorage.removeItem('scriptBooth.geminiPreferredModel');
+      $('#apiKey').value = '';
+      geminiCache.key = ''; geminiCache.models = null; geminiCache.preferred = ''; geminiCache.expires = 0;
+      status('#aiStatus', 'Saved key cleared. Paste the new key, then click Save key.', 'warn');
+    };
+
+    $('#testAI').onclick = async () => {
+      try {
+        status('#aiStatus', 'Testing Gemini connection…');
+        const j = await gemini('Return JSON only: {"ok":true}');
+        status('#aiStatus', j.ok ? 'AI on — connection successful!' : 'AI replied, but unexpected format.', 'warn');
+      } catch (e) {
+        status('#aiStatus', `Test failed: ${e.message}`, 'error');
+      }
+    };
+
+    // Cast, scene, and camera builders
+    $('#castAddBtn').onclick = () => {
+      const v = normalizeName($('#castAdd').value);
+      if (v && !cast().map(normalizeName).includes(v)) {
+        $('#cast').value = [...cast(), v].join(', ');
+        $('#castAdd').value = '';
+        persist();
+        renderCast();
+        render();
+      }
+    };
+
+    $('#addScene').onclick = () => {
+      const p = $('#scenePlace').value.trim().toUpperCase();
+      if (p) {
+        add('scene', `${$('#sceneIn').value} ${p} - ${$('#sceneTime').value}`);
+        state.places = [...new Set([...state.places, p])];
+        persist();
+      }
+    };
+
+    $('#addShot').onclick = () => {
+      const subj = $('#subject').value.trim().toUpperCase();
+      add('shot', `${$('#shot').value}${subj ? ' - ' + subj : ''}`);
+    };
+
+    $('#speakerColors').onchange = e => {
+      state.showColors = e.target.checked;
+      render();
+    };
+
+    // Title fields in settings card
+    ['title', 'author', 'contact'].forEach(k => {
+      $(`#${k}Field`)?.addEventListener('input', e => {
+        state[k] = e.target.value;
+        persist();
+        render();
+      });
+    });
+
+    // Formatting & script management
+    $('#spacing').onchange = () => render();
+    $('#cast').onchange = () => { persist(); renderCast(); render(); };
+
+    $('#formatBtn').onclick = async () => {
+      state.formatUndo = structuredClone(state.lines);
+      $('#undoFormat').disabled = false;
+      try {
+        status('#liveStatus', 'Formatting screenplay with Gemini…');
+        const prompt = `Return JSON only: {"blocks":[{"type":"scene|action|character|dialogue|parenthetical|shot|transition","text":"...","speaker":"OPTIONAL"}]}. Polish this into an industry-standard film script. Preserve story. Add FADE IN: at beginning and FADE OUT. at end when appropriate.\n${plain()}`;
+        const j = await gemini(prompt);
+        if (!Array.isArray(j.blocks)) throw Error('Invalid format response');
+        state.lines = j.blocks
+          .filter(b => TYPES.includes(b.type) && b.text)
+          .map(b => ({
+            id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + Math.random()),
+            type: b.type,
+            text: b.text,
+            speaker: normalizeName(b.speaker || ''),
+            source: 'ai'
+          }));
+        persist();
+        render();
+        status('#liveStatus', 'Script formatted by AI.');
+      } catch (e) {
+        status('#liveStatus', `Format failed: ${e.message}`, 'error');
+      }
+    };
+
+    $('#undoFormat').onclick = () => {
+      if (state.formatUndo) {
+        state.lines = state.formatUndo;
+        state.formatUndo = null;
+        $('#undoFormat').disabled = true;
+        persist();
+        render();
+        status('#liveStatus', 'Formatting undone.');
+      }
+    };
+
+    $('#recheckBtn').onclick = async () => {
+      const dialogues = state.lines.filter(l => l.type === 'dialogue');
+      if (!dialogues.length) return;
+      try {
+        status('#liveStatus', 'Re-checking speakers with Gemini…');
+        const prompt = `Return JSON only: {"speakers":["NAME",...]}. Choose a speaker for each dialogue line, in order. Cast: ${cast().join(', ')}. Dialogue:\n${dialogues.map(x => x.text).join('\n')}`;
+        const j = await gemini(prompt);
+        if (!Array.isArray(j.speakers)) throw Error('Invalid response');
+        dialogues.forEach((d, i) => {
+          if (j.speakers[i]) {
+            d.speaker = normalizeName(j.speakers[i]);
+            const c = state.lines.slice(0, state.lines.indexOf(d)).reverse().find(x => x.type === 'character');
+            if (c) c.text = c.speaker = d.speaker;
+          }
+        });
+        persist();
+        render();
+        status('#liveStatus', 'Speakers re-checked by AI.');
+      } catch (e) {
+        status('#liveStatus', `Re-check failed: ${e.message}`, 'error');
+      }
+    };
+
+    $('#newSheet').onclick = () => {
+      state.lines.push({ id: crypto.randomUUID ? crypto.randomUUID() : Date.now(), type: 'break', text: '' });
+      persist();
+      render();
+    };
+
+    $('#fab').onclick = $('#newSheet').onclick;
+
+    $('#clearBtn').onclick = () => {
+      if (!state.clearArmed) {
+        state.clearArmed = true;
+        $('#clearBtn').textContent = 'Click again to clear';
+        setTimeout(() => {
+          state.clearArmed = false;
+          $('#clearBtn').textContent = '↻ Clear all';
+        }, 2500);
+        return;
+      }
+      state.lines = [];
+      state.forcedPages = 0;
+      state.clearArmed = false;
+      $('#clearBtn').textContent = '↻ Clear all';
+      persist();
+      render();
+      status('#liveStatus', 'Script cleared.');
+    };
+
+    $('#saveScript').onclick = () => {
+      const all = JSON.parse(localStorage.getItem('scriptBooth.saved') || '[]');
+      all.unshift({
+        id: crypto.randomUUID ? crypto.randomUUID() : Date.now(),
+        name: state.title || 'Untitled',
+        saved: new Date().toLocaleString(),
+        data: {
+          lines: state.lines,
+          title: state.title,
+          author: state.author,
+          contact: state.contact,
+          forcedPages: state.forcedPages
+        }
+      });
+      localStorage.setItem('scriptBooth.saved', JSON.stringify(all.slice(0, 30)));
+      status('#liveStatus', 'Script saved in browser storage.');
+    };
+
+    $('#openScripts').onclick = () => {
+      const all = JSON.parse(localStorage.getItem('scriptBooth.saved') || '[]');
+      const container = $('#savedList');
+      container.innerHTML = all.length
+        ? all.map(x => `<button data-open="${x.id}" style="margin:2px;font-size:11px">${esc(x.name)}<br><small>${esc(x.saved)}</small></button>`).join(' ')
+        : 'No saved scripts yet.';
+
+      container.querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
+        const x = all.find(item => item.id == b.dataset.open);
+        if (x) {
+          Object.assign(state, x.data);
+          persist();
+          render();
+          status('#liveStatus', `Opened "${x.name}".`);
+        }
+      });
+    };
+
+    $('#newScript').onclick = () => {
+      if (state.lines.length) $('#saveScript').click();
+      Object.assign(state, { lines: [], title: 'UNTITLED', author: '', contact: '', forcedPages: 0 });
+      persist();
+      render();
+      status('#liveStatus', 'New script started.');
+    };
+
+    // Toolbar & exports
+    $('#copyBtn').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(plain());
+        status('#liveStatus', 'Script copied to clipboard.');
+      } catch (e) {
+        status('#liveStatus', 'Clipboard permission denied. Use Save .txt instead.', 'warn');
+      }
+    };
+
+    $('#fountainBtn').onclick = () => download(`${state.title || 'script'}.fountain`, fountain(), 'text/plain');
+    $('#textBtn').onclick = () => download(`${state.title || 'script'}.txt`, plain(), 'text/plain');
+    $('#printBtn').onclick = () => window.print();
+
+    // Zoom and panel toggle
+    $('#zoom').onchange = e => document.body.className = e.target.value;
+
+    let currentZoom = 1;
+    const applyZoom = () => {
+      document.querySelectorAll('.page').forEach(p => {
+        p.style.transform = `scale(${currentZoom})`;
+        p.style.transformOrigin = 'top center';
+        p.style.marginBottom = `${(currentZoom - 1) * 1056}px`;
+      });
+    };
+
+    $('#zoomOut').onclick = () => {
+      currentZoom = Math.max(0.5, currentZoom - 0.1);
+      applyZoom();
+    };
+
+    $('#zoomIn').onclick = () => {
+      currentZoom = Math.min(1.6, currentZoom + 0.1);
+      applyZoom();
+    };
+
+    $('#fit').onclick = () => {
+      const mainW = $('.main')?.clientWidth || 800;
+      currentZoom = Math.min(1, Math.max(0.5, (mainW - 40) / 816));
+      applyZoom();
+    };
+
+    $('#hidePanel').onclick = () => {
+      const panel = $('.panel');
+      panel.hidden = !panel.hidden;
+      $('#hidePanel').textContent = panel.hidden ? 'Show panel' : 'Hide panel';
+    };
+
+    // Global key listener for dialogue change
+    let lastSignal = 0;
+    document.addEventListener('keyup', e => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.target.matches?.('input, textarea, [contenteditable], select')) return;
+      if (e.key === 'Escape') return;
+      if ([' ', 'Enter'].includes(e.key)) e.preventDefault();
+      if (Date.now() - lastSignal < 300) return;
+      lastSignal = Date.now();
+      splitTurn();
+    });
+  }
+
+  function setupMediaButtons() {
+    if (!navigator.mediaSession) return;
+    let lastSignal = 0;
+    const signal = () => {
+      if (Date.now() - lastSignal > 300) {
+        lastSignal = Date.now();
+        splitTurn();
+      }
+    };
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: 'Script Booth — dialogue marker' });
+      ['play', 'pause', 'nexttrack', 'previoustrack', 'stop'].forEach(a => {
+        navigator.mediaSession.setActionHandler(a, signal);
+      });
+    } catch (e) {
+      console.warn('Media session setup:', e);
+    }
+  }
+
+  window.addEventListener('error', e => {
+    const bar = $('#errorBar');
+    if (bar) {
+      bar.hidden = false;
+      bar.textContent = `Error: ${e.message}`;
+    }
+  });
+
+  // Initialization
+  setupEventListeners();
+  load();
+  renderLiveTranscript();
+})();
+</script>
+</body>
+</html>
